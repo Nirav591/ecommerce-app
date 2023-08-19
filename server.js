@@ -12,6 +12,6 @@ app.use(express.json());
 app.use('/auth', authRoute.router);
 app.use('/user', userRoute.router);
 
-app.listen(8080, () => {
-  console.log(`Server is running on port 8080.`);
+app.listen(4040, () => {
+  console.log(`Server is running on port 4040.`);
 });
