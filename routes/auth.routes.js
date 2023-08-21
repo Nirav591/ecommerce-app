@@ -3,6 +3,7 @@ const { createUser, loginUser, forgotPassword, resetPassword } = require('../con
 const { checkUsernameOrEmail } = require('../middleware/verifySignUp');
 const router = express.Router();
 
+
 router
   .post('/signup', checkUsernameOrEmail, createUser)
   .post('/signin', loginUser)

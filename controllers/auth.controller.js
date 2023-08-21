@@ -4,7 +4,6 @@ const nodemailer = require('nodemailer');
 const jwt = require('jsonwebtoken');
 
 exports.createUser = (req, res) => {
-  console.log(req.body);
   connection.getConnection(async (err, connection) => {
     if (err) {
       res.status(400).json(err);
@@ -41,23 +40,30 @@ exports.loginUser = (req, res) => {
       connection.query('SELECT * FROM users WHERE email = ?', [email], (error, user) => {
         connection.release();
         if (user.length) {
-          const token = jwt.sign({ id: user[0].id }, 'secretKey');
+          const token = jwt.sign({ id: user[0].id }, 'secretKey', {
+            algorithm: 'HS256',
+            allowInsecureKeySizes: true,
+            expiresIn: 86400, // 24 hours
+          });
           bcrypt.compare(req.body.password, user[0].password).then(function (result) {
-            result
-              ? res.status(200).json({
-                  message: 'Login successful',
-                  id: user[0].id,
-                  email: user[0].email,
-                  username: user[0].username,
-                  role: user[0].role,
-                  token: token,
-                })
-              : res.status(400).json({ message: 'invalid credentials' });
+            if (result) {
+              req.session.token = token;
+              res.status(200).json({
+                message: 'Login successful',
+                id: user[0].id,
+                email: user[0].email,
+                username: user[0].username,
+                role: user[0].role,
+                token: token,
+              });
+              // process.exit();
+            } else {
+              res.status(400).json({ message: 'invalid credentials' });
+            }
           });
         } else {
           res.status(401).json({
             message: 'No such user email',
-            error: 'User not found',
           });
         }
       });
