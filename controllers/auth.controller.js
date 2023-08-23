@@ -1,4 +1,5 @@
 const { connection } = require('../config/db.config');
+const emailValidator = require('email-validator');
 const bcrypt = require('bcryptjs');
 const nodemailer = require('nodemailer');
 const jwt = require('jsonwebtoken');
@@ -11,6 +12,14 @@ exports.createUser = (req, res) => {
     console.log(`Connection as id ${connection.threadId}`);
 
     try {
+      if (!emailValidator.validate(req.body.email)) {
+        return res.status(400).json({ error: 'Invalid email address' });
+      }
+
+      if (req.body.password.length < 8) {
+        return res.status(400).json({ error: 'Password must be at least 8 characters long' });
+      }
+      
       const hash = await bcrypt.hash(req.body.password, 10);
       const user = { ...req.body, password: hash };
       connection.query('INSERT INTO users SET ?', user, (err, result) => {

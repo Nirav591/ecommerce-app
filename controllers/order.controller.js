@@ -4,10 +4,10 @@ exports.createOrder = (req, res) => {
   console.log("req", req.body);
   try {
     const userId = req.userId;
-    // console.log(req.body, userId, 'cart');
+    const { shipping_address, paymentMethod, totalPrice, totalQuantity, items}=req.body;
     const query = `
-      INSERT INTO order (items, userId, totalQuantity, totalPrice, paymentMethod, shipping_address, items )
-      VALUES (?, ?, ?)
+      INSERT INTO \`order\` (userId, shipping_address, payment_method, total_price, total_quantity, items)
+      VALUES (?, ?, ?, ?, ?, ?)
     `;
 
     connection.getConnection((err, connection) => {
@@ -16,13 +16,21 @@ exports.createOrder = (req, res) => {
         return res.status(400).send('Database connection error!');
       }
 
-      connection.query(query, [productId, userId, quantity], (err, result) => {
+      connection.query(query, [userId, JSON.stringify(shipping_address), paymentMethod, totalPrice, totalQuantity, JSON.stringify(items)], (err, result) => {
         connection.release();
         if (err) {
           console.error(err);
           return res.status(500).json({ error: 'An error occurred while inserting data' });
         }
-        res.status(200).json({ message: 'Create order successfully' });
+
+        
+        connection.query('DELETE FROM cart WHERE userId = ?',[userId],(err, items)=>{
+          if(!err){
+            console.log("Cart is empty successfully!");
+          }
+        })
+
+        res.status(200).json({ message: 'Create order successfully' ,orderId: result.insertId});
       });
     });
   } catch (error) {
